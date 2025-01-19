@@ -2,18 +2,18 @@
 
 namespace App\Repository;
 
-use App\Entity\Video;
+use App\Entity\Media;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Video>
+ * @extends ServiceEntityRepository<Media>
  */
-class VideoRepository extends ServiceEntityRepository
+class MediaRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Video::class);
+        parent::__construct($registry, Media::class);
     }
 
     //    /**

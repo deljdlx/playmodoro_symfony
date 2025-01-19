@@ -2,14 +2,14 @@
 
 namespace App\Controller;
 
-use App\Entity\Video;
+use App\Entity\Media;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class YouTubeController extends AbstractController
+class YoutubeController extends AbstractController
 {
     private HttpClientInterface $httpClient;
     private EntityManagerInterface $entityManager;
@@ -26,8 +26,8 @@ class YouTubeController extends AbstractController
     public function getVideoInfo(string $videoId): JsonResponse
     {
         // 1️⃣ Vérifier si la vidéo est déjà en base de données
-        $videoRepository = $this->entityManager->getRepository(Video::class);
-        $existingVideo = $videoRepository->findOneBy(['api_id' => $videoId]);
+        $mediaRepository = $this->entityManager->getRepository(Media::class);
+        $existingVideo = $mediaRepository->findOneBy(['api_id' => $videoId]);
 
         if ($existingVideo) {
             return $this->json([
@@ -57,7 +57,8 @@ class YouTubeController extends AbstractController
         $videoData = $data['items'][0];
 
         // 3️⃣ Stocker la vidéo en base de données
-        $video = new Video();
+        $video = new Media();
+        $video->setType('youtube-video');
         $video->setApiId($videoId);
         $video->setData($videoData);
         $video->setSource('youtube-api');

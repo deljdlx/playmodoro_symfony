@@ -2,12 +2,12 @@
 
 namespace App\Entity;
 
-use App\Repository\VideoRepository;
+use App\Repository\MediaRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: VideoRepository::class)]
-#[ORM\Table(name: "videos")]  // 🔥 Ajout du nom personnalisé de la table
-class Video
+#[ORM\Entity(repositoryClass: MediaRepository::class)]
+#[ORM\Table(name: "medias")]  // 🔥 Ajout du nom personnalisé de la table
+class Media
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -19,6 +19,9 @@ class Video
 
     #[ORM\Column(length: 255)]
     private ?string $source = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $type = null;
 
 
     #[ORM\Column(nullable: true)]
@@ -63,6 +66,18 @@ class Video
     public function setSource(string $source): static
     {
         $this->source = $source;
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
 
         return $this;
     }
