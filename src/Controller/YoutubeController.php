@@ -29,11 +29,17 @@ class YoutubeController extends AbstractController
         $existingVideo = $mediaRepository->findOneBy(['api_id' => $videoId]);
 
         if ($existingVideo) {
-            return $this->json([
+            $response = $this->json([
                 'api_id' => $existingVideo->getApiId(),
                 'data' => $existingVideo->getData(),
                 'source' => 'database' // Indique que les données viennent de la BDD
             ]);
+
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+            return $response;
         }
 
 
@@ -55,7 +61,6 @@ class YoutubeController extends AbstractController
 
         $videoData = $data['items'][0];
 
-        // 3️⃣ Stocker la vidéo en base de données
         $video = new Media();
         $video->setType('youtube-video');
         $video->setApiId($videoId);
@@ -65,12 +70,18 @@ class YoutubeController extends AbstractController
         $this->entityManager->persist($video);
         $this->entityManager->flush();
 
-        // 4️⃣ Retourner les données au client
-        return $this->json([
+
+        $response = $this->json([
             'api_id' => $video->getApiId(),
             'data' => $video->getData(),
-            'source' => 'youtube-api' // Indique que les données viennent de l'API YouTube
+            'source' => 'youtube-api'
         ]);
+
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+        return $response;
     }
 
     #[Route('/api/playlist/{playlistId}', methods: ['GET'])]
@@ -80,12 +91,18 @@ class YoutubeController extends AbstractController
         $existingPlaylist = $mediaRepository->findOneBy(['api_id' => $playlistId]);
 
         if ($existingPlaylist) {
-            return $this->json([
+            $response = $this->json([
                 'api_id' => $existingPlaylist->getApiId(),
                 'data' => $existingPlaylist->getData(),
                 'source' => 'database' // Indique que les données viennent de la BDD
             ]);
-        }
+
+            $response->headers->set('Access-Control-Allow-Origin', '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+            return $response;
+       }
 
         $url = sprintf(
             "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=%s&maxResults=50&key=%s",
@@ -123,13 +140,16 @@ class YoutubeController extends AbstractController
             $this->entityManager->flush();
         }
 
-        return $this->json([
+        $response = $this->json([
             'api_id' => $playlist->getApiId(),
             'data' => $data,
             'source' => 'youtube-api'
         ]);
+        $response->headers->set('Access-Control-Allow-Origin', '*');
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-
+        return $response;
     }
 
 
