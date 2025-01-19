@@ -25,7 +25,6 @@ class YoutubeController extends AbstractController
     #[Route('/api/video/{videoId}', methods: ['GET'])]
     public function getVideoInfo(string $videoId): JsonResponse
     {
-        // 1️⃣ Vérifier si la vidéo est déjà en base de données
         $mediaRepository = $this->entityManager->getRepository(Media::class);
         $existingVideo = $mediaRepository->findOneBy(['api_id' => $videoId]);
 
@@ -37,7 +36,7 @@ class YoutubeController extends AbstractController
             ]);
         }
 
-        // 2️⃣ Si la vidéo n'est pas en base, récupérer les infos depuis l'API YouTube
+
         $url = "https://www.googleapis.com/youtube/v3/videos";
         $params = [
             'query' => [
@@ -73,4 +72,65 @@ class YoutubeController extends AbstractController
             'source' => 'youtube-api' // Indique que les données viennent de l'API YouTube
         ]);
     }
+
+    #[Route('/api/playlist/{playlistId}', methods: ['GET'])]
+    public function getPlaylistInfo(string $playlistId): JsonResponse
+    {
+        $mediaRepository = $this->entityManager->getRepository(Media::class);
+        $existingPlaylist = $mediaRepository->findOneBy(['api_id' => $playlistId]);
+
+        if ($existingPlaylist) {
+            return $this->json([
+                'api_id' => $existingPlaylist->getApiId(),
+                'data' => $existingPlaylist->getData(),
+                'source' => 'database' // Indique que les données viennent de la BDD
+            ]);
+        }
+
+        $url = sprintf(
+            "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=%s&maxResults=50&key=%s",
+            $playlistId,
+            $this->apiKey
+        );
+
+        $response = $this->httpClient->request('GET', $url);
+        $data = $response->toArray();
+
+        // save playlist in database
+        $playlist = new Media();
+        $playlist->setType('youtube-playlist');
+        $playlist->setApiId($playlistId);
+        $playlist->setData($data);
+        $playlist->setSource('youtube-api');
+
+        $this->entityManager->persist($playlist);
+        $this->entityManager->flush();
+
+        foreach ($data['items'] as $item) {
+            $videoId = $item['snippet']['resourceId']['videoId'];
+            $existingVideo = $mediaRepository->findOneBy(['api_id' => $videoId]);
+            if ($existingVideo) {
+                continue;
+            }
+
+            $video = new Media();
+            $video->setType('youtube-video');
+            $video->setApiId($videoId);
+            $video->setData($item);
+            $video->setSource('youtube-api');
+
+            $this->entityManager->persist($video);
+            $this->entityManager->flush();
+        }
+
+        return $this->json([
+            'api_id' => $playlist->getApiId(),
+            'data' => $data,
+            'source' => 'youtube-api'
+        ]);
+
+
+    }
+
+
 }
