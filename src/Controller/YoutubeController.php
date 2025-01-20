@@ -160,6 +160,8 @@ class YoutubeController extends AbstractController
         $query = $request->query->get('q');
         $query = trim($query);
 
+        $noCache = $request->query->get('noCache');
+
         if (!$query) {
             return $this->json(['error' => 'Aucun mot-clé fourni'], 400);
         }
@@ -173,7 +175,7 @@ class YoutubeController extends AbstractController
 
         $mediaRepository = $this->entityManager->getRepository(Media::class);
         $existingSearch = $mediaRepository->findOneBy(['api_id' => $slug]);
-        if ($existingSearch) {
+        if ($existingSearch && !$noCache) {
             $response = $this->json([
                 'api_id' => $existingSearch->getApiId(),
                 'data' => $existingSearch->getData(),
@@ -194,7 +196,7 @@ class YoutubeController extends AbstractController
             'query' => [
                 'part' => 'snippet',
                 'q' => $query,
-                'type' => 'video',
+                'type' => 'video,playlist',
                 'maxResults' => 100,
                 'key' => $this->apiKey,
             ]
@@ -222,7 +224,17 @@ class YoutubeController extends AbstractController
         $this->entityManager->flush();
 
         foreach ($data['items'] as $item) {
-            $videoId = $item['id']['videoId'];
+
+            if($item['id']['kind'] === ' youtube#playlist') {
+                $videoId = $item['id']['playlistId'];
+            }
+            elseif($item['id']['kind'] === 'youtube#video') {
+                $videoId = $item['id']['videoId'];
+            }
+            else {
+                continue;
+            }
+
             $existingVideo = $mediaRepository->findOneBy(['api_id' => $videoId]);
             if ($existingVideo) {
                 continue;
